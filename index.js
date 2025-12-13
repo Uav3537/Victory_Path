@@ -5,7 +5,7 @@ const { platform } = require("os")
 const {pa} = require("./resources/module.cjs")
 
 const p = pa
-
+//테스트
 fastify.register(fastify_cors, {
   origin: "*"
 })
