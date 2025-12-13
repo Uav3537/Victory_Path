@@ -1,0 +1,3 @@
+const url = "https://hwmdjmlahexhodavlpbz.supabase.co"
+const service_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3bWRqbWxhaGV4aG9kYXZscGJ6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDU3NTc0NiwiZXhwIjoyMDgwMTUxNzQ2fQ.aLErUbDSmwFFAIIYtyKwaxQtm0MboWVXWk8kJV5pWgI"
+module.exports = {url, service_key}

@@ -1,0 +1,7 @@
+{
+    "supabase" : {
+        "url" : "https://fumezqjckwdsrcromtlw.supabase.co",
+        "anonKey" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1bWV6cWpja3dkc3Jjcm9tdGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzMzkzNjAsImV4cCI6MjA3MzkxNTM2MH0.C59KVqatobqvzi6fjpbzkAk-_IXUsJk6sPitbMKr_5s",
+        "serviceKey" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1bWV6cWpja3dkc3Jjcm9tdGx3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODMzOTM2MCwiZXhwIjoyMDczOTE1MzYwfQ.Q8QhnlJ9_N3ALEgth0mhGK2H6_FRs5S_W2qBB-VQ_s0"
+    }
+}
