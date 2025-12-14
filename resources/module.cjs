@@ -260,7 +260,7 @@ const pa = {
         }
         else if(type == "servers") {
             const count = input.count
-            let cursor = null
+            let cursor = input.cursor
             let server = []
             for(let i=0;i<count;i=i+1) {
                 const link = (cursor)
