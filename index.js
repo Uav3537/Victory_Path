@@ -31,7 +31,6 @@ fastify.addHook("preHandler", async(request, reply) => {
 })
 
 fastify.post("/register", async(request, reply) => {
-  console.log("/register.js 실행됨")
   const memberList = await p.supabaseAPI("select", "memberList")
   const player = memberList.find(i => i.id == request.user.id)
   const token = await p.createToken(1, 30 * 60 * 1000, {
@@ -42,7 +41,6 @@ fastify.post("/register", async(request, reply) => {
     grade: player?.grade || 1,
     player: player
   })
-  console.log(token)
   return token
 })
 
@@ -59,8 +57,8 @@ fastify.post("/list", async(request, reply) => {
     let data = req
     if(i == "memberList" || i == "teamerList") {
       const [userList, imgList] = await Promise.all([
-        p.robloxAPI("users", req.map(j => j.id), request.cookies, 20),
-        p.robloxAPI("thumbnails", req.map(j => ({targetId: j.id})), request.cookies, 20)
+        p.robloxAPI("users", {target: req.map(j => j.id)}, request.cookies, 20),
+        p.robloxAPI("thumbnails", {target: req.map(j => ({targetId: j.id}))}, request.cookies, 20)
       ])
 
       data = req.map(j => ({
@@ -92,6 +90,17 @@ fastify.post("/track", async(request, reply) => {
   return res
 })
 
-fastify.post("/teamerList", async() => {
-  return true
+fastify.post("/teamerList/:type", async(request, reply) => {
+  if(request.params.type == "add") {
+    if(request.token.grade < 2) return reply.code(403).send({error: 'Forbidden', retry: false})
+    const list = await p.supabaseAPI("select", "teamerList")
+    const target = request.body
+    if(!(target?.id && target?.country && target?.reason?.length > 0)) return reply.code(400).send({error: 'Bad Request', retry: false})
+    if(list.some(i => i.id == target.id)) return reply.code(409).send({error: 'Conflict', retry: false})
+    await p.supabaseAPI("insert", "teamerList", {id: target.id, reason: target.reason, country: target.country, request: request.token.player.id})
+    return true
+  }
+  else {
+    return reply.code(404).send({error: 'Not Found', retry: false})
+  }
 })

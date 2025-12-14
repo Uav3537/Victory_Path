@@ -87,14 +87,12 @@ const pa = {
         return res.data
     },
     createToken: async function(type, time, data) {
-        console.log(data)
         const token = {
             expire: new Date(Date.now() + time),
             type: type,
             token: crypto.randomBytes(32).toString('hex'),
             data: data
         }
-        console.log(token)
         await this.supabaseAPI("insert", "tokens", token)
         return token
     },
@@ -133,7 +131,7 @@ const pa = {
             return res.flat()
         }
         else if(type == "usernames") {
-            const arr = this.sliceArray(input, 100)
+            const arr = this.sliceArray(input.target, 100)
             const res = await Promise.all(arr.map(async(i) => {
                 try {
                     const req = await this.fetchGeneral(
@@ -156,7 +154,7 @@ const pa = {
             return res.flat()
         }
         else if(type == "users") {
-            const res = await Promise.all(input.map(async(i) => {
+            const res = await Promise.all(input.target.map(async(i) => {
                 try {
                     const req = await this.fetchGeneral(
                         `https://users.roblox.com/v1/users/${i}`, {
@@ -196,7 +194,7 @@ const pa = {
             return res.flat()
         }
         else if(type == "thumbnails") {
-            const batchList = input.map((val, i) => {
+            const batchList = input.target.map((val, i) => {
                 const data = {...val}
                 const def = {
                     size:  "150x150",
@@ -285,7 +283,7 @@ const pa = {
             return res
         }
         else if(type == "serverDetail") {
-            const res = await Promise.all(input.map(async(i) => {
+            const res = await Promise.all(input.target.map(async(i) => {
                 try {
                     const req = await this.fetchGeneral(
                         `https://gamejoin.roblox.com/v1/join-game-instance`, {
@@ -316,8 +314,8 @@ const pa = {
     parseImage: async function(placeId, server, format, roblosecurity) {
         const tokens = server.data.map(i => i.playerTokens.map(j => ({token: j, jobId: i.id, ...(format || {})}))).flat()
         const [thumbnails, serverData, ipSave] = await Promise.all([
-            this.robloxAPI("thumbnails", tokens, roblosecurity),
-            this.robloxAPI("serverDetail", server.data.map(i => ({placeId: placeId, jobId: i.id})), roblosecurity),
+            this.robloxAPI("thumbnails", {target: tokens}, roblosecurity),
+            this.robloxAPI("serverDetail", {target: server.data.map(i => ({placeId: placeId, jobId: i.id}))}, roblosecurity),
             this.supabaseAPI("select", "ipSave")
         ])
         const ipList = serverData.map(i => ({jobId: i?.jobId, ip: i.joinScript?.UdmuxEndpoints?.[0]?.Address || i.joinScript?.MachineAddress}))
@@ -354,11 +352,11 @@ const pa = {
     },
     track: async function(placeId, target, cookies) {
         const idList = target.filter(i => typeof i == "number")
-        const textList = await this.robloxAPI("usernames", target.filter(i => "string"))
+        const textList = await this.robloxAPI("usernames", {target: target.filter(i => typeof i == "string")})
         textList.forEach(i => idList.push(i?.id))
         const [userList, imgList, serverList] = await Promise.all([
-            this.robloxAPI("users", idList, cookies),
-            this.robloxAPI("thumbnails", idList.map(i => ({targetId: i})), cookies),
+            this.robloxAPI("users", {target: idList}, cookies),
+            this.robloxAPI("thumbnails", {target: idList.map(i => ({targetId: i}))}, cookies),
             this.robloxAPI("servers", {placeId: placeId, count: 1000}, cookies)
         ])
         const detailList = userList.map(i => ({
