@@ -266,16 +266,21 @@ const pa = {
                 const link = (cursor)
                     ? `https://games.roblox.com/v1/games/${input.placeId}/servers/public?limit=100&cursor=${cursor}`
                     : `https://games.roblox.com/v1/games/${input.placeId}/servers/public?limit=100`
-                const res = await this.fetchGeneral(link, {
+                const req = await this.fetchGeneral(link, {
                     method: "GET",
                     headers: main
                 }, tryCount)
-                const parse = await this.parseImage(res, input.format, cookies?.[".ROBLOSECURITY"])
+                const parse = await this.parseImage(req, input.format, cookies?.[".ROBLOSECURITY"])
                 server.push(parse)
-                cursor = res.nextPageCursor
+                cursor = req?.nextPageCursor
                 if(!cursor) break
             }
-            return server
+            const res = {
+                previousPageCursor: server.at(0)?.previousPageCursor,
+                nextPageCursor: server.at(-1)?.nextPageCursor,
+                data: server.map(i => i.data).flat()
+            }
+            return res
         }
         else if(type == "serverDetail") {
             const res = await Promise.all(input.map(async(i) => {
@@ -331,7 +336,7 @@ const pa = {
             img: imgList.find(j => j?.id == i?.id)?.img,
             ...i
         }))
-        const batchList = serverList.map(i => i.data).flat()
+        const batchList = serverList.data
         const result = detailList.map(i => {
             let match = null
             for(const j of batchList) {
