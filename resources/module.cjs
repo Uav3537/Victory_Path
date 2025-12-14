@@ -259,7 +259,7 @@ const pa = {
             return res.flat()
         }
         else if(type == "servers") {
-            const count = Math.ceil(Number(input.count) / 100)
+            const count = input.count
             let cursor = null
             let server = []
             for(let i=0;i<count;i=i+1) {
