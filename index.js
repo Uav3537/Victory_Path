@@ -44,7 +44,8 @@ fastify.post("/list", async(request, reply) => {
   const access = [
     "teamerList",
     "memberList",
-    "country"
+    "country",
+    "translation"
   ]
   const res = await Promise.all(list.filter(i => access.includes(i)).map(async(i) => {
     const req = await p.supabaseAPI("select", i)
@@ -60,6 +61,14 @@ fastify.post("/list", async(request, reply) => {
         ...userList.find(t => t.id == j.id),
         img: imgList.find(t => t.id == j.id)?.img
       }))
+    }
+    else if(i == "translation") {
+      const lan = request.headers["language"] || "en"
+      data = data.reduce((acc, item) => {
+        const languageKey = item[lan] ? lan : "en";
+        acc[item.name] = item[languageKey];
+        return acc;
+      }, {});
     }
     return {requestId: i, data: data}
   }))
