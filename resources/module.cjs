@@ -87,12 +87,14 @@ const pa = {
         return res.data
     },
     createToken: async function(type, time, data) {
+        console.log(data)
         const token = {
             expire: new Date(Date.now() + time),
             type: type,
             token: crypto.randomBytes(32).toString('hex'),
             data: data
         }
+        console.log(token)
         await this.supabaseAPI("insert", "tokens", token)
         return token
     },

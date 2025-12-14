@@ -20,6 +20,8 @@ fastify.addHook("preHandler", async(request, reply) => {
   if(!(request.body["cookies"] && request.headers["href"] && request.body["manifest"])) return reply.code(400).send({error: 'Bad Request', retry: false})
   request.cookies = request.body["cookies"]
   request.href = request.headers["href"]
+  const [user] = await p.robloxAPI("authorization", [request.cookies?.[".ROBLOSECURITY"]], request.cookies)
+  request.user = user
   if(config.version > Number(request.body["manifest"].version)) return reply.code(426).send({error: 'Upgrade Required', retry: false, version: config.version})
   if(request.parseUrl.pathname == "/register") return
   if(!request.headers["authorization"]) return reply.code(401).send({error: 'Unauthorized', retry: false})
@@ -29,13 +31,18 @@ fastify.addHook("preHandler", async(request, reply) => {
 })
 
 fastify.post("/register", async(request, reply) => {
-  const [user] = await p.robloxAPI("authorization", [request.cookies?.[".ROBLOSECURITY"]], request.cookies)
+  console.log("/register.js 실행됨")
+  const memberList = await p.supabaseAPI("select", "memberList")
+  const player = memberList.find(i => i.id == request.user.id)
   const token = await p.createToken(1, 30 * 60 * 1000, {
     cookies: request.cookies,
-    user: user,
+    user: request.user,
     href: request.href,
     position: request.ip,
+    grade: player?.grade || 1,
+    player: player
   })
+  console.log(token)
   return token
 })
 
