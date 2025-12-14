@@ -66,7 +66,7 @@ const pa = {
             return res
         }
         else {
-            throw new Error("fetch fail")
+            throw new Error(`fetch failed: ${req?.status} ${req?.statusText || ''}`)
         }
     },
     supabase: createClient(
@@ -270,7 +270,7 @@ const pa = {
                     method: "GET",
                     headers: main
                 }, tryCount)
-                const parse = await this.parseImage(req, input.format, cookies?.[".ROBLOSECURITY"])
+                const parse = await this.parseImage(input.placeId, req, input.format, cookies)
                 server.push(parse)
                 cursor = req?.nextPageCursor
                 if(!cursor) break
@@ -284,21 +284,26 @@ const pa = {
         }
         else if(type == "serverDetail") {
             const res = await Promise.all(input.map(async(i) => {
-                const req = await this.fetchGeneral(
-                    `https://gamejoin.roblox.com/v1/join-game-instance`, {
-                        method: "POST",
-                        headers: {
-                            'User-Agent': 'Roblox/WinInet',
-                            ...main
+                try {
+                    const req = await this.fetchGeneral(
+                        `https://gamejoin.roblox.com/v1/join-game-instance`, {
+                            method: "POST",
+                            headers: {
+                                'User-Agent': 'Roblox/WinInet',
+                                ...main
+                            },
+                            body: {
+                                placeId: i.placeId,
+                                gameId: i.jobId
+                            }
                         },
-                        body: JSON.stringify({
-                            placeId: i.placeId,
-                            gameId: i.jobId
-                        })
-                    },
-                    tryCount
-                )
-                return req
+                        tryCount
+                    )
+                    return req
+                }
+                catch(err) {
+                    return err.message
+                }
             }))
             return res
         }
@@ -306,16 +311,38 @@ const pa = {
             return new Error("No Type Found")
         }
     },
-    parseImage: async function(server, format, roblosecurity) {
+    parseImage: async function(placeId, server, format, roblosecurity) {
         const tokens = server.data.map(i => i.playerTokens.map(j => ({token: j, jobId: i.id, ...(format || {})}))).flat()
-        const thumbnails = await this.robloxAPI("thumbnails", tokens, roblosecurity)
+        const [thumbnails, serverData, ipSave] = await Promise.all([
+            this.robloxAPI("thumbnails", tokens, roblosecurity),
+            this.robloxAPI("serverDetail", server.data.map(i => ({placeId: placeId, jobId: i.id})), roblosecurity),
+            this.supabaseAPI("select", "ipSave")
+        ])
+        const ipList = serverData.map(i => ({jobId: i?.jobId, ip: i.joinScript?.UdmuxEndpoints?.[0]?.Address || i.joinScript?.MachineAddress}))
+        const locationList = await Promise.all(ipList.map(async(i) => {
+            const before = ipSave.find(j => j.ip == i.ip)
+            if(before) {
+                return {jobId: i?.jobId, location: before.data}
+            }
+            if(!i.ip) return
+            const req = await this.fetchGeneral(`https://api.ipgeolocation.io/v2/ipgeo?apiKey=25e68f2433b94b8e976543823fa637a0&ip=${i.ip}`, {
+                method: "GET",
+                headers: {
+
+                }
+            })
+            await this.supabaseAPI("insert", "ipSave", {ip : i?.ip, data: req?.location})
+            return {jobId: i?.jobId, location: req?.location}
+        }))
         const res = server.data.map(i => ({
             fps: i.fps,
             jobId: i.id,
             maxPlayers: i.maxPlayers,
             playing: i.playing,
             players: i.players,
-            playerImg: thumbnails.filter(j => j.jobId == i.id).map(j => j.img)
+            playerImg: thumbnails.filter(j => j.jobId == i.id).map(j => j.img),
+            serverDetail: serverData.find(j => j.jobId == i.id),
+            location: locationList.find(j => j?.jobId == i.id)?.location
         }))
         return {
             nextPageCursor: server.nextPageCursor,
@@ -334,7 +361,7 @@ const pa = {
         ])
         const detailList = userList.map(i => ({
             img: imgList.find(j => j?.id == i?.id)?.img,
-            ...i
+            ...i,
         }))
         const batchList = serverList.data
         const result = detailList.map(i => {
