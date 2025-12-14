@@ -75,3 +75,7 @@ fastify.post("/track", async(request, reply) => {
   const res = await p.track(request.body.placeId, request.body.target, request.cookies)
   return res
 })
+
+fastify.post("/teamerList", async() => {
+  return true
+})
